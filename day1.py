@@ -48,7 +48,6 @@ for v in inList:
 
         if grid[int(x+offset), int(y+offset)] == 1:
             print('Found location! ' + str(x) + ", " + str(y) + ' distance: ' + str(abs(x)+abs(y)))
-            break
         grid[x + offset, y + offset] = 1
 
 
