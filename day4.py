@@ -12,6 +12,17 @@ def read_room(txt):
     return {'name':name, 'sector_id':sector_id, 'checksum':checksum}
 
 
+def decrypt(room):
+    key = room['sector_id'] % 26
+    output = ''
+    for c in room['name']:
+        if c == '-':
+            output += ' '
+        else:
+            output += chr(ord('a') + ((ord(c) - ord('a')) + key ) % 26)
+    return output
+
+
 def is_valid_room(room):
     distinct_list = list(set(room['name']))
     distinct_list.remove('-')
@@ -51,6 +62,13 @@ for txt in read_data:
     # print('Name: ' + x['name'] + ' sector id: ' + str(x['sector_id']) + ' checksum: ' + x['checksum'] + ' is valid: ' + str(is_valid_room(x)))
     if is_valid_room(x):
         sector_id_sum += x['sector_id']
+
+        txt_dec = decrypt(x)
+        #print('sector id: ' + str(x['sector_id']) + " " + txt_dec)
+
+        if 'north' in txt_dec:
+            print('sector id: ' + str(x['sector_id']) + " " + txt_dec)
+
 
 print('Sum sector ids: ' + str(sector_id_sum))
 
