@@ -4,14 +4,15 @@ from copy import deepcopy
 To do build a tree like structure
 """
 
+
 def combinations(l):
+    ret = []
     if len(l) < 2:
-        return l
+        return ret
 
     if len(l) == 2:
         return [(l[0], l[1])]
 
-    ret = []
     for x in range(0, len(l) - 1):
         for y in range(x+1, len(l)):
             r = (l[x], l[y])
@@ -115,7 +116,7 @@ class State:
 
         items_on_floor = self.floor[self.elevator]
 
-        print('Items on the floor: ' + str(items_on_floor))
+        # print('Items on the floor: ' + str(items_on_floor))
         # First do all single item moves, only keep valid end result
         for i in items_on_floor:
             if self.elevator < 4:
@@ -131,30 +132,30 @@ class State:
                 if new_state.is_safe():
                     ret.append(new_state)
 
-        print('Items on this floor now: ' + str(self.floor[self.elevator]))
         dl = combinations(items_on_floor)
-        print(dl)
 
         # Do all double item moves, only keep valid end result
         for d1, d2 in dl:
-            print('Double move: ' + d1 + ' ' + d2)
             if d1 == d2:
                 print('Items should not appear twice')
-                continue # Same item twice, impossible
+                continue  # Same item twice, impossible
 
-            if d1[1] != d2[1] and  d1[0] != d2[0]:
+            if len(d1) != 2 or len(d2) != 2:
+                print('Invalid length! in devices ' + self.__str__())
+                print(dl)
+                quit()
+
+            if d1[1] != d2[1] and d1[0] != d2[0]:
                 # one is generator other is chip and they are not of the same type, UNSAFE
                 continue
 
-            print('This move is possible')
+            # print('This move is possible')
             if self.elevator < 4:
                 new_state = deepcopy(self)
                 new_state.move_up(d1)
                 new_state.move_up(d2)
                 new_state.elevator += 1
-                print('Testing if the state is safe: ' + str(new_state))
                 if new_state.is_safe():
-                    print('It is saFE!')
                     ret.append(new_state)
 
             if self.elevator > 1:
@@ -178,20 +179,36 @@ initial_state.floor[2].append('HG')
 initial_state.floor[3].append('LG')
 initial_state.elevator = 1
 
-
 print(initial_state)
-print('Initial state is safe: ' + str(initial_state.is_safe()))
-print('Initial state is end state: ' + str(initial_state.is_end_state()))
+# print('Initial state is safe: ' + str(initial_state.is_safe()))
+# print('Initial state is end state: ' + str(initial_state.is_end_state()))
 
-# print('Moving object up')
-# initial_state.move_up('HM')
-# print(initial_state)
-#
-# print('Moving object down')
-# initial_state.move_down('HM')
-# print(initial_state)
+steps = 1
+tree = {}
+tree.update({steps: [initial_state]})
 
-new_states = initial_state.next_states()
-for ns in new_states:
-    print('New state: ' + str(ns))
+while True:
+    cur_state = tree[steps]
+    new_states = []
+    for cs in cur_state:
+        new_states += cs.next_states()
 
+
+    # Clean up state
+    # remove states which are found before
+
+    # Check if we reached the end state
+    for ns in new_states:
+        if ns.is_end_state():
+            print('End state reached in ' + str(steps) + ' steps')
+            break
+
+    print('Step: ' + str(steps) + ' Found ' + str(len(new_states)) + ' new states')
+    # for ns in new_states:
+    #     print('new state content: ' + str(ns))
+    steps += 1
+
+    tree.update({steps: new_states})
+    if steps > 4:
+        print('Too many steps, stopping')
+        break
