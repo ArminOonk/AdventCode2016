@@ -1,5 +1,5 @@
 from copy import deepcopy
-
+from datetime import datetime
 """
 To do build a tree like structure
 """
@@ -30,6 +30,7 @@ class State:
         for key, value in self.floor.items():
             txt += ' floor ' + str(key) + ": "
             if value:
+                value.sort()
                 for v in value:
                     txt += ' ' + str(v)
             else:
@@ -172,6 +173,15 @@ We can stop a particular branch if:
 - We do not have a next_state
 - This particular state has been reached before with less steps
 """
+# Test state
+# initial_state = State()
+# initial_state.floor[1].append('HM')
+# initial_state.floor[1].append('LM')
+# initial_state.floor[2].append('HG')
+# initial_state.floor[3].append('LG')
+# initial_state.elevator = 1
+
+# Real state
 initial_state = State()
 initial_state.floor[1].append('HM')
 initial_state.floor[1].append('LM')
@@ -187,6 +197,7 @@ steps = 1
 tree = {}
 tree.update({steps: [initial_state]})
 
+start_time = datetime.now()
 while True:
     cur_state = tree[steps]
     new_states = []
@@ -197,11 +208,19 @@ while True:
     # Clean up state
     # remove states which are found before
 
+    for x in range(1,steps):
+        for old_state in tree[x]:
+            for ns in new_states:
+                if str(ns) == str(old_state):
+                    # print('Duplicate, removing')
+                    new_states.remove(ns)
+
     # Check if we reached the end state
     for ns in new_states:
         if ns.is_end_state():
             print('End state reached in ' + str(steps) + ' steps')
-            break
+            print('Search took: ' + str((datetime.now() - start_time).total_seconds()) + ' sec')
+            quit()
 
     print('Step: ' + str(steps) + ' Found ' + str(len(new_states)) + ' new states')
     # for ns in new_states:
@@ -209,6 +228,8 @@ while True:
     steps += 1
 
     tree.update({steps: new_states})
-    if steps > 4:
+    if steps > 12:
         print('Too many steps, stopping')
         break
+
+print('Search took: ' + str((datetime.now() - start_time).total_seconds()) + ' sec')
