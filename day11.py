@@ -186,6 +186,9 @@ We can stop a particular branch if:
 initial_state = State()
 initial_state.floor[1].append('HM')
 initial_state.floor[1].append('LM')
+initial_state.floor[1].append('SG')
+initial_state.floor[1].append('SM')
+
 initial_state.floor[2].append('HG')
 initial_state.floor[3].append('LG')
 initial_state.elevator = 1
@@ -197,44 +200,43 @@ initial_state.elevator = 1
 # initial_state.floor[1].append('PG')
 # initial_state.floor[1].append('PM')
 #
-#
 # initial_state.floor[2].append('TG')
-# initial_state.floor[2].append('RG')
-# initial_state.floor[2].append('RM')
-# initial_state.floor[2].append('CG')
-# initial_state.floor[2].append('CM')
+# # initial_state.floor[2].append('RG')
+# # initial_state.floor[2].append('RM')
+# # initial_state.floor[2].append('CG')
+# # initial_state.floor[2].append('CM')
 #
 # initial_state.floor[3].append('TM')
 # initial_state.elevator = 1
 
 print(initial_state)
-# print('Initial state is safe: ' + str(initial_state.is_safe()))
-# print('Initial state is end state: ' + str(initial_state.is_end_state()))
 
 steps = 1
 tree = {}
 tree.update({steps: [initial_state]})
+all_states = []
 
 start_time = datetime.now()
 while True:
     cur_state = tree[steps]
-    tmp = []
+    new_states_all = []
     for cs in cur_state:
-        tmp += cs.next_states()
+        tmp = cs.next_states()
+        for t in tmp:
+            if t not in new_states_all:
+                new_states_all.append(t)
 
+    # print('New states found: ' + str(len(new_states)))
     # Clean up state
     # remove states which are found before
 
     new_states = []
-    for t in tmp:
-        if t not in new_states:
-            new_states.append(t)
+    for nsa in new_states_all:
+        if nsa not in all_states:
+            new_states.append(nsa)
 
-    for x in range(1, steps):
-        for old_state in tree[x]:
-            for ns in new_states:
-                if ns == old_state:
-                    new_states.remove(ns)
+    # Create one big list of all states
+    all_states += new_states
 
     # Check if we reached the end state
     for ns in new_states:
@@ -249,8 +251,5 @@ while True:
     steps += 1
 
     tree.update({steps: new_states})
-    if steps > 20:
-        print('Too many steps, stopping')
-        break
 
 print('Search took: ' + str((datetime.now() - start_time).total_seconds()) + ' sec')
