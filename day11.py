@@ -25,12 +25,21 @@ class State:
         self.elevator = 1
         self.floor = {1:[], 2:[], 3:[], 4:[]}
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __str__(self):
         txt = 'Elevator is at floor ' + str(self.elevator)
         for key, value in self.floor.items():
             txt += ' floor ' + str(key) + ": "
             if value:
-                value.sort()
+                # value.sort()
                 for v in value:
                     txt += ' ' + str(v)
             else:
@@ -174,20 +183,29 @@ We can stop a particular branch if:
 - This particular state has been reached before with less steps
 """
 # Test state
-# initial_state = State()
-# initial_state.floor[1].append('HM')
-# initial_state.floor[1].append('LM')
-# initial_state.floor[2].append('HG')
-# initial_state.floor[3].append('LG')
-# initial_state.elevator = 1
-
-# Real state
 initial_state = State()
 initial_state.floor[1].append('HM')
 initial_state.floor[1].append('LM')
 initial_state.floor[2].append('HG')
 initial_state.floor[3].append('LG')
 initial_state.elevator = 1
+
+# Real state
+# initial_state = State()
+# initial_state.floor[1].append('SG')
+# initial_state.floor[1].append('SM')
+# initial_state.floor[1].append('PG')
+# initial_state.floor[1].append('PM')
+#
+#
+# initial_state.floor[2].append('TG')
+# initial_state.floor[2].append('RG')
+# initial_state.floor[2].append('RM')
+# initial_state.floor[2].append('CG')
+# initial_state.floor[2].append('CM')
+#
+# initial_state.floor[3].append('TM')
+# initial_state.elevator = 1
 
 print(initial_state)
 # print('Initial state is safe: ' + str(initial_state.is_safe()))
@@ -200,19 +218,22 @@ tree.update({steps: [initial_state]})
 start_time = datetime.now()
 while True:
     cur_state = tree[steps]
-    new_states = []
+    tmp = []
     for cs in cur_state:
-        new_states += cs.next_states()
-
+        tmp += cs.next_states()
 
     # Clean up state
     # remove states which are found before
 
-    for x in range(1,steps):
+    new_states = []
+    for t in tmp:
+        if t not in new_states:
+            new_states.append(t)
+
+    for x in range(1, steps):
         for old_state in tree[x]:
             for ns in new_states:
-                if str(ns) == str(old_state):
-                    # print('Duplicate, removing')
+                if ns == old_state:
                     new_states.remove(ns)
 
     # Check if we reached the end state
@@ -228,7 +249,7 @@ while True:
     steps += 1
 
     tree.update({steps: new_states})
-    if steps > 12:
+    if steps > 20:
         print('Too many steps, stopping')
         break
 
