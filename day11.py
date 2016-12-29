@@ -24,10 +24,12 @@ class State:
     def __init__(self):
         self.elevator = 1
         self.floor = {1: [], 2: [], 3: [], 4: []}
+        self.hash = ''
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return self.__dict__ == other.__dict__
+            #return self.__dict__ == other.__dict__
+            return self.hash == other.hash
         else:
             return False
 
@@ -45,6 +47,14 @@ class State:
             else:
                 txt += 'Empty'
         return txt
+
+    def update_hash(self):
+        txt = str(self.elevator) + ':'
+        for key, value in self.floor.items():
+            # txt += str(key) + ',' + str(sum([x[1] == 'G' for x in value])) + ',' + str(len(value)) + ';'
+            txt += str(sum([x[1] == 'G' for x in value])) + ',' + str(len(value)) + ';'
+
+        self.hash = txt
 
     def move_up(self, name):
         for key, value in self.floor.items():
@@ -129,23 +139,31 @@ class State:
         # First do all single item moves, only keep valid end result
         # do not break up pairs
         available_singels = []
+        # available_pair = ()
+
         for iof in items_on_floor:
             if iof[1] == 'G':
                 fc = iof[0] + 'M'
                 if fc not in items_on_floor:
                     available_singels.append(iof)
+                # elif not available_pair:
+                #     available_pair = (iof, fc)
+
             if iof[1] == 'M':
                 fc = iof[0] + 'G'
                 if fc not in items_on_floor:
                     available_singels.append(iof)
+                # elif not available_pair:
+                #     available_pair = (iof, fc)
 
         for i in available_singels:
-
+            # Only move a single up if it is the only option
             if self.elevator < 4:
                 new_state = deepcopy(self)
                 new_state.move_up(i)
                 new_state.elevator += 1
                 if new_state.is_safe():
+                    new_state.update_hash()
                     ret.append(new_state)
 
             if self.elevator > 1:
@@ -160,9 +178,15 @@ class State:
                     new_state.move_down(i)
                     new_state.elevator -= 1
                     if new_state.is_safe():
+                        new_state.update_hash()
                         ret.append(new_state)
 
         dl = combinations(items_on_floor)
+        # dl = combinations(available_singels)
+        # if available_pair:
+        #     dl.append(available_pair)
+        #     print(available_pair)
+        # print(dl)
 
         # Do all double item moves, only keep valid end result
         for d1, d2 in dl:
@@ -179,22 +203,23 @@ class State:
                 # one is generator other is chip and they are not of the same type, UNSAFE
                 continue
 
-            # print('This move is possible')
             if self.elevator < 4:
                 new_state = deepcopy(self)
                 new_state.move_up(d1)
                 new_state.move_up(d2)
                 new_state.elevator += 1
                 if new_state.is_safe():
+                    new_state.update_hash()
                     ret.append(new_state)
 
-            if self.elevator > 1:
-                new_state = deepcopy(self)
-                new_state.move_down(d1)
-                new_state.move_down(d2)
-                new_state.elevator -= 1
-                if new_state.is_safe():
-                    ret.append(new_state)
+            # DO not move down a pair
+            # if self.elevator > 1 and d1[1] == d2[1]:
+            #     new_state = deepcopy(self)
+            #     new_state.move_down(d1)
+            #     new_state.move_down(d2)
+            #     new_state.elevator -= 1
+            #     if new_state.is_safe():
+            #         ret.append(new_state)
         return ret
 """
 We can stop a particular branch if:
@@ -203,33 +228,35 @@ We can stop a particular branch if:
 - This particular state has been reached before with less steps
 """
 # Test state
-initial_state = State()
-initial_state.floor[1].append('HM')
-initial_state.floor[1].append('LM')
-# initial_state.floor[1].append('SG')
-# initial_state.floor[1].append('SM')
-
-initial_state.floor[2].append('HG')
-initial_state.floor[3].append('LG')
-initial_state.elevator = 1
+# initial_state = State()
+# initial_state.floor[1].append('HM')
+# initial_state.floor[1].append('LM')
+# # initial_state.floor[1].append('SG')
+# # initial_state.floor[1].append('SM')
+#
+# initial_state.floor[2].append('HG')
+# initial_state.floor[3].append('LG')
+# initial_state.elevator = 1
 
 # Real state
-# initial_state = State()
-# initial_state.floor[1].append('SG')
-# initial_state.floor[1].append('SM')
-# initial_state.floor[1].append('PG')
-# initial_state.floor[1].append('PM')
-#
-# initial_state.floor[2].append('TG')
-# initial_state.floor[2].append('RG')
-# initial_state.floor[2].append('RM')
-# initial_state.floor[2].append('CG')
-# initial_state.floor[2].append('CM')
-#
-# initial_state.floor[3].append('TM')
-# initial_state.elevator = 1
-#
-# print(initial_state)
+initial_state = State()
+initial_state.floor[1].append('SG')
+initial_state.floor[1].append('SM')
+initial_state.floor[1].append('PG')
+initial_state.floor[1].append('PM')
+
+initial_state.floor[2].append('TG')
+initial_state.floor[2].append('RG')
+initial_state.floor[2].append('RM')
+initial_state.floor[2].append('CG')
+initial_state.floor[2].append('CM')
+
+initial_state.floor[3].append('TM')
+initial_state.elevator = 1
+
+initial_state.update_hash()
+print('hash: ' + initial_state.hash)
+print(initial_state)
 
 steps = 1
 total_states = 1
@@ -258,8 +285,9 @@ while True:
 
     # Check if we reached the end state
     for ns in new_states:
+        # print(ns)
         if ns.is_end_state():
-            print('End state reached in ' + str(steps) + ' steps, examine ' + str(total_states) + ' states')
+            print('End state reached in ' + str(steps) + ' steps, examined ' + str(total_states) + ' states')
             print('Search took: ' + str((datetime.now() - start_time).total_seconds()) + ' sec')
             quit()
 
