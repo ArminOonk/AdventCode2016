@@ -23,7 +23,7 @@ def combinations(l):
 class State:
     def __init__(self):
         self.elevator = 1
-        self.floor = {1:[], 2:[], 3:[], 4:[]}
+        self.floor = {1: [], 2: [], 3: [], 4: []}
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -126,21 +126,41 @@ class State:
 
         items_on_floor = self.floor[self.elevator]
 
-        # print('Items on the floor: ' + str(items_on_floor))
         # First do all single item moves, only keep valid end result
-        for i in items_on_floor:
+        # do not break up pairs
+        available_singels = []
+        for iof in items_on_floor:
+            if iof[1] == 'G':
+                fc = iof[0] + 'M'
+                if fc not in items_on_floor:
+                    available_singels.append(iof)
+            if iof[1] == 'M':
+                fc = iof[0] + 'G'
+                if fc not in items_on_floor:
+                    available_singels.append(iof)
+
+        for i in available_singels:
+
             if self.elevator < 4:
                 new_state = deepcopy(self)
                 new_state.move_up(i)
                 new_state.elevator += 1
                 if new_state.is_safe():
                     ret.append(new_state)
+
             if self.elevator > 1:
-                new_state = deepcopy(self)
-                new_state.move_down(i)
-                new_state.elevator -= 1
-                if new_state.is_safe():
-                    ret.append(new_state)
+                # Do not move single to empty floors
+                can_move_down = False
+                for x in range(1, self.elevator):
+                    if self.floor[x]:
+                        can_move_down = True
+                        break
+                if can_move_down:
+                    new_state = deepcopy(self)
+                    new_state.move_down(i)
+                    new_state.elevator -= 1
+                    if new_state.is_safe():
+                        ret.append(new_state)
 
         dl = combinations(items_on_floor)
 
@@ -186,8 +206,8 @@ We can stop a particular branch if:
 initial_state = State()
 initial_state.floor[1].append('HM')
 initial_state.floor[1].append('LM')
-initial_state.floor[1].append('SG')
-initial_state.floor[1].append('SM')
+# initial_state.floor[1].append('SG')
+# initial_state.floor[1].append('SM')
 
 initial_state.floor[2].append('HG')
 initial_state.floor[3].append('LG')
@@ -201,17 +221,18 @@ initial_state.elevator = 1
 # initial_state.floor[1].append('PM')
 #
 # initial_state.floor[2].append('TG')
-# # initial_state.floor[2].append('RG')
-# # initial_state.floor[2].append('RM')
-# # initial_state.floor[2].append('CG')
-# # initial_state.floor[2].append('CM')
+# initial_state.floor[2].append('RG')
+# initial_state.floor[2].append('RM')
+# initial_state.floor[2].append('CG')
+# initial_state.floor[2].append('CM')
 #
 # initial_state.floor[3].append('TM')
 # initial_state.elevator = 1
-
-print(initial_state)
+#
+# print(initial_state)
 
 steps = 1
+total_states = 1
 tree = {}
 tree.update({steps: [initial_state]})
 all_states = []
@@ -226,10 +247,6 @@ while True:
             if t not in new_states_all:
                 new_states_all.append(t)
 
-    # print('New states found: ' + str(len(new_states)))
-    # Clean up state
-    # remove states which are found before
-
     new_states = []
     for nsa in new_states_all:
         if nsa not in all_states:
@@ -237,19 +254,23 @@ while True:
 
     # Create one big list of all states
     all_states += new_states
+    total_states += len(new_states)
 
     # Check if we reached the end state
     for ns in new_states:
         if ns.is_end_state():
-            print('End state reached in ' + str(steps) + ' steps')
+            print('End state reached in ' + str(steps) + ' steps, examine ' + str(total_states) + ' states')
             print('Search took: ' + str((datetime.now() - start_time).total_seconds()) + ' sec')
             quit()
 
     print('Step: ' + str(steps) + ' Found ' + str(len(new_states)) + ' new states')
+
+    if len(new_states) == 0:
+        print('No solution')
+        quit()
     # for ns in new_states:
     #     print('new state content: ' + str(ns))
     steps += 1
-
     tree.update({steps: new_states})
 
 print('Search took: ' + str((datetime.now() - start_time).total_seconds()) + ' sec')
