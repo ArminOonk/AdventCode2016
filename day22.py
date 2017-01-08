@@ -1,4 +1,18 @@
-with open('testInputDay22.txt', 'r') as f:
+def is_viable_pair(a, b):
+    if a == b:
+        return False
+
+    if a['used'] == 0:
+        return False
+
+    if a['used'] > b['avail']:
+        return False
+
+    return True
+
+
+
+with open('inputDay22.txt', 'r') as f:
     data = f.readlines()
 
 disks = []
@@ -33,3 +47,14 @@ for d in data:
         disks.append({'x': x, 'y': y, 'size': size, 'used': used, 'avail': avail})
 
 print('Loaded ' + str(len(disks)) + ' disks')
+viable_pairs = []
+cnt = 0
+for a in disks:
+    for b in disks:
+        if is_viable_pair(a, b):
+            viable_pairs.append({'a': a, 'b': b})
+    cnt += 1
+    if cnt%50 == 0:
+        print('Cnt: ' + str(cnt))
+
+print('Number of viable pairs: ' + str(len(viable_pairs)))
