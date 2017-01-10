@@ -13,18 +13,35 @@ class machine:
             self.data = f.readlines()
 
     def state(self):
-        txt = 'Reg a: ' + str(self.reg_a)
+        txt = 'Index: ' + str(self.index) + "\n"
+        txt += 'Reg a: ' + str(self.reg_a)
         txt += ' Reg b: ' + str(self.reg_b)
         txt += ' Reg c: ' + str(self.reg_c)
-        txt += ' Reg d: ' + str(self.reg_d)
+        txt += ' Reg d: ' + str(self.reg_d) + "\n"
+
+        txt += "Data: \n"
+        for d in self.data:
+            txt +=  ' ' + d.strip() + "\n"
+        txt += '-'*20+"\n"
+
         return txt
+
+    def get_reg_val(self, reg):
+        if reg == 'a':
+            return self.reg_a
+        if reg == 'b':
+            return self.reg_b
+        if reg == 'c':
+            return self.reg_c
+        if reg == 'd':
+            return self.reg_d
 
     def run(self):
         counter = 0
 
         while True:
-            if counter % 10000 == 0:
-                print('Index: ' + str(self.index) + ' ' + self.state())
+            # if counter % 10000 == 0:
+            #     print( self.state())
                 # print('Data: ')
                 # for d in self.data:
                 #     print(' ' + d.strip())
@@ -34,13 +51,49 @@ class machine:
                 break
 
             cmd = self.data[self.index].strip()
+            print(str(self.index) + ' ' + cmd)
             # print('Counter: ' + str(counter))
             # print('Command: ' + cmd)
+
+            # if counter == 1000:
+            #     quit()
 
             if cmd.startswith('cpy'):
                 self.cpy(cmd)
             elif cmd.startswith('inc'):
-                self.inc(cmd)
+                # Check if we can optimize this a bit
+                if self.index + 4 < len(self.data) and self.index - 1 >= 0 and \
+                   self.data[self.index-1].startswith('cpy') and \
+                   self.data[self.index + 1].startswith('dec') and \
+                   self.data[self.index + 2].startswith('jnz') and \
+                   self.data[self.index + 3].startswith('dec') and \
+                   self.data[self.index + 3].startswith('jnz'):
+
+                    cpysrc, cpydest = self.data[self.index-1].split(" ")[1:]
+                    dec1op = self.data[self.index+1].split(" ")[1]
+                    jnz1cond, jnz1off = self.data[self.index+2].split(" ")[1:]
+                    dec2op = self.data[self.index+3].split(" ")[1]
+                    jnz2cond, jnz2off = self.data[self.index+4].split(" ")[1:]
+
+                    if cpydest == dec1op and dec1op == jnz1cond and \
+                        dec2op == jnz2cond and \
+                        jnz1off == "-2" and jnz2off == "-5":
+
+                        vals = cmd.split()
+                        if vals[1] == 'a':
+                            self.reg_a = self.get_reg_val(cpysrc)* self.get_reg_val(dec2op)
+                        elif vals[1] == 'b':
+                            self.reg_b = self.get_reg_val(cpysrc)* self.get_reg_val(dec2op)
+                        elif vals[1] == 'c':
+                            self.reg_c = self.get_reg_val(cpysrc)* self.get_reg_val(dec2op)
+                        elif vals[1] == 'd':
+                            self.reg_d = self.get_reg_val(cpysrc)* self.get_reg_val(dec2op)
+
+                        self.index += 5
+                        print('Optimize!')
+                        continue
+                else:
+                    self.inc(cmd)
             elif cmd.startswith('dec'):
                 self.dec(cmd)
             elif cmd.startswith('jnz'):
@@ -195,6 +248,7 @@ class machine:
 
         self.index += 1
 
-mach = machine('inputDay23.txt', reg_a=7)
+# mach = machine('inputDay23.txt', reg_a=7)
+mach = machine('inputDay23.txt', reg_a=12)
 mach.run()
 print(mach.state())
