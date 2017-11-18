@@ -128,7 +128,7 @@ possible_routes = permutations(''.join(points))
 shortest_distance = 999999999999999999
 shortest_route = ''
 for pr in possible_routes:
-    route = '0' + ''.join(pr)
+    route = '0' + ''.join(pr) + '0'
 
     distance = 0
     for x in range(2, len(route)+1):
